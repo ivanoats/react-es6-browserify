@@ -5,12 +5,12 @@ var gutil = require('gulp-util');
 
 var livereload = require('gulp-livereload');
 var connect = require('connect');
+var serveStatic = require('serve-static');
 
 var rename = require('gulp-rename');
 var browserify = require('browserify');
 var watchify = require('watchify');
-var es6ify = require('es6ify');
-var reactify = require('reactify');
+var babelify = require('babelify');
 var source = require('vinyl-source-stream');
 
 
@@ -28,8 +28,8 @@ var htmlBuild = dist;
 var jsxFiles = 'app/jsx/**/*.jsx';
 
 var vendorFiles = [
-    'bower_components/react/react-with-addons.js',
-    'node_modules/es6ify/node_modules/traceur/bin/traceur-runtime.js'];
+    'bower_components/react/react-with-addons.js'
+    ];
 var vendorBuild = dist + '/vendor';
 var requireFiles = './node_modules/react/react.js';
 
@@ -50,7 +50,6 @@ function compileScripts(watch) {
     gutil.log('Starting browserify');
 
     var entryFile = './app/jsx/app.jsx';
-    es6ify.traceurOverrides = {experimental: true};
 
     var bundler;
     if (watch) {
@@ -60,8 +59,7 @@ function compileScripts(watch) {
     }
 
     bundler.require(requireFiles);
-    bundler.transform(reactify);
-    bundler.transform(es6ify.configure(/.jsx/));
+    bundler.transform(babelify);
 
     var rebundle = function () {
         var stream = bundler.bundle({ debug: true});
@@ -71,8 +69,8 @@ function compileScripts(watch) {
         stream.pipe(rename('app.js'));
 
         stream.pipe(gulp.dest('dist/bundle'));
-    }
-        
+    };
+
     bundler.on('update', rebundle);
     return rebundle();
 }
@@ -80,7 +78,7 @@ function compileScripts(watch) {
 
 gulp.task('server', function (next) {
     var server = connect();
-    server.use(connect.static(dist)).listen(serverPort, next);
+    server.use(serveStatic(dist)).listen(serverPort, next);
 });
 
 
